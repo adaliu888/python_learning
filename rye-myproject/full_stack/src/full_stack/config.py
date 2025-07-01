@@ -1,7 +1,7 @@
 """
 配置模块
 """
-import os
+
 from typing import Optional
 
 from pydantic import PostgresDsn, field_validator

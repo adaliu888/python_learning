@@ -4,7 +4,7 @@
 import os
 import sys
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.exc import OperationalError
 
 # 添加父目录到路径，以便导入 config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
