@@ -1,0 +1,257 @@
+openapi: 3.0.0
+info:
+  title: 用户认证系统 API
+  description: 基于FastAPI和PostgreSQL的用户注册登录系统
+  version: 0.1.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: 本地开发服务器
+
+tags:
+  - name: authentication
+    description: 认证相关操作
+  - name: users
+    description: 用户管理操作
+
+paths:
+  /token:
+    post:
+      tags:
+        - authentication
+      summary: 用户登录
+      description: 通过用户名和密码获取访问令牌
+      operationId: loginForAccessToken
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: 用户名
+                password:
+                  type: string
+                  description: 密码
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: 成功获取令牌
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+
+  /users/:
+    post:
+      tags:
+        - users
+      summary: 创建用户
+      description: 注册新用户
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '200':
+          description: 用户创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: 用户名或邮箱已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+    
+    get:
+      tags:
+        - users
+      summary: 获取用户列表
+      description: 获取所有用户的列表（需要认证）
+      operationId: readUsers
+      parameters:
+        - name: skip
+          in: query
+          description: 跳过的记录数
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: 返回的最大记录数
+          required: false
+          schema:
+            type: integer
+            default: 100
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功获取用户列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 未认证
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+
+  /users/{user_id}:
+    get:
+      tags:
+        - users
+      summary: 获取用户详情
+      description: 通过用户ID获取用户详情（需要认证）
+      operationId: readUser
+      parameters:
+        - name: user_id
+          in: path
+          description: 用户ID
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功获取用户详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+        '401':
+          description: 未认证
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+
+  /users/me/:
+    get:
+      tags:
+        - users
+      summary: 获取当前用户信息
+      description: 获取当前登录用户的详细信息（需要认证）
+      operationId: readUsersMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功获取当前用户信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 未认证
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPError'
+
+components:
+  schemas:
+    UserBase:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 电子邮箱
+      required:
+        - username
+        - email
+
+    UserCreate:
+      allOf:
+        - $ref: '#/components/schemas/UserBase'
+        - type: object
+          properties:
+            password:
+              type: string
+              minLength: 8
+              description: 密码
+          required:
+            - password
+
+    UserResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserBase'
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: 用户ID
+            is_active:
+              type: boolean
+              description: 用户是否激活
+            created_at:
+              type: string
+              format: date-time
+              description: 创建时间
+            updated_at:
+              type: string
+              format: date-time
+              description: 更新时间
+
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT访问令牌
+        token_type:
+          type: string
+          description: 令牌类型
+      required:
+        - access_token
+        - token_type
+
+    HTTPError:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: 错误详情
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
