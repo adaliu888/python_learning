@@ -1,11 +1,15 @@
 [project]
-name = "my-project"
+name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
     { name = "adaliu888", email = "84856103@qq.com" }
 ]
-dependencies = []
+dependencies = [
+    "flask>=3.1.1",
+    "flask-cors>=6.0.1",
+    "gunicorn>=23.0.0",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
@@ -21,4 +25,4 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/my_project"]
+packages = ["src/backend"]
